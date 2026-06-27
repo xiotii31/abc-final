@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ABC — Queue Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2a5e;--navy-d:#111e4a;
+  --red:#e53e3e;       
+  --blue:#38a169;     
+  --green:#f97316;    
+  --amber:#d97706;--purple:#eab308;
+  --bg:#f0f4f8;--card:#fff;--border:#e2e8f0;
+  --text:#1a202c;--muted:#718096;--muted2:#a0aec0;
+}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+/* ── LAYOUT ── */
+.wrap{width:100vw;height:100vh;display:grid;grid-template-rows:68px 1fr 72px;grid-template-columns:1fr 380px;grid-template-areas:"hd hd""main side""ft ft"}
+
+/* ── TOPBAR ── */
+.hd{
+  grid-area:hd;background:var(--navy);
+  display:flex;align-items:center;justify-content:space-between;padding:0 32px;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);z-index:10;
+}
+.hd-left{display:flex;align-items:center;gap:14px}
+.logo-slot{display:flex;align-items:center;gap:8px}
+.logo-img{
+  width:44px;height:44px;border-radius:50%;overflow:hidden;
+  background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-img img{width:100%;height:100%;object-fit:cover;display:block}
+.logo-img .ph{font-size:9px;color:rgba(255,255,255,.5);text-align:center;line-height:1.3;padding:3px}
+.hd-brand h1{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;font-weight:400}
+.hd-brand p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.hd-right{display:flex;align-items:center;gap:16px}
+.live-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.1em}
+.live-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+
+/* ── MAIN: Now Calling ── */
+.main{
+  grid-area:main;background:var(--card);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;border-right:1px solid var(--border);
+}
+.nc-label{
+  font-size:13px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:20px;
+  display:flex;align-items:center;gap:16px;width:100%;max-width:480px;
+}
+.nc-label::before,.nc-label::after{content:'';flex:1;height:1.5px;background:var(--border)}
+
+.nc-number-wrap{position:relative;text-align:center;margin-bottom:8px}
+.nc-number{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(100px,18vw,180px);
+  line-height:1;font-variant-numeric:tabular-nums;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+}
+.nc-number.empty{color:var(--border);font-size:56px;font-family:'Inter',sans-serif;font-weight:300}
+.nc-number.priority{color:var(--red)}
+.nc-number.regular{color:var(--blue)}
+.nc-number.followup{color:var(--purple)}
+@keyframes pop{0%{transform:scale(.5) translateY(20px);opacity:0}65%{transform:scale(1.06) translateY(-4px);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+.nc-number.calling{animation:pop .6s cubic-bezier(.34,1.56,.64,1) forwards}
+
+.nc-type{font-size:17px;color:var(--muted);margin-bottom:20px;text-align:center}
+.nc-step-box{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:14px;
+  padding:16px 32px;max-width:500px;width:100%;
+  font-size:18px;font-weight:600;color:var(--text);text-align:center;line-height:1.4;
+}
+.nc-step-box.empty{font-size:14px;font-weight:400;color:var(--muted2)}
+
+/* type indicator strip */
+.nc-strip{
+  width:100%;max-width:500px;height:5px;border-radius:99px;margin-bottom:20px;
+  background:var(--border);overflow:hidden;
+}
+.nc-strip-fill{height:100%;border-radius:99px;transition:background .5s}
+
+/* ── SIDEBAR ── */
+.side{
+  grid-area:side;background:var(--bg);
+  padding:20px 18px;display:flex;flex-direction:column;gap:14px;overflow:hidden;
+  border-right:1px solid var(--border);
+}
+.s-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.s-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+
+/* Count grid */
+.cnt-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cnt-cell{
+  border-radius:10px;padding:12px 8px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:1.5px solid var(--border);background:var(--bg);
+}
+.cnt-icon{width:26px;height:26px;object-fit:contain}
+.cnt-num{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.cnt-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.c-red{color:var(--red)}.c-blue{color:var(--blue)}.c-green{color:var(--green)}.c-purple{color:var(--purple)}
+.c-red-lbl{color:#fc8181}.c-blue-lbl{color:#63b3ed}.c-purple-lbl{color:#b794f4}
+
+/* Queue list */
+.q-list{flex:1;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+.q-row{
+  background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  animation:si .3s ease;box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+@keyframes si{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.q-row.is-next{border-color:var(--navy);background:#ebf4ff}
+.q-ticket{font-family:'DM Serif Display',serif;font-size:24px;min-width:60px;font-variant-numeric:tabular-nums}
+.q-ticket.priority{color:var(--red)}.q-ticket.regular{color:var(--blue)}.q-ticket.followup{color:var(--purple)}
+.q-info{flex:1}
+.q-type{font-size:11px;color:var(--muted);font-weight:500}
+.q-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.badge-next{background:var(--navy);color:#fff}
+.badge-wait{background:var(--bg);color:var(--muted2);border:1px solid var(--border)}
+.no-q{text-align:center;color:var(--muted2);font-size:13px;padding:20px 0;background:var(--card);border:1.5px dashed var(--border);border-radius:10px}
+
+/* ── FOOTER ── */
+.ft{
+  grid-area:ft;background:var(--navy);
+  display:flex;align-items:center;justify-content:space-between;padding:0 32px;gap:24px;
+  box-shadow:0 -2px 8px rgba(0,0,0,.15);
+}
+.ft-stat{text-align:center}
+.ft-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+.ft-lbl{font-size:10px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;margin-top:1px}
+.ft-div{width:1px;height:32px;background:rgba(255,255,255,.15)}
+.ticker-wrap{overflow:hidden;flex:1}
+.ticker-inner{white-space:nowrap;animation:tick 28s linear infinite;display:inline-block;font-size:12px;color:rgba(255,255,255,.4)}
+@keyframes tick{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOPBAR -->
+  <header class="hd">
+    <div class="hd-left">
+      <div class="logo-slot">
+        <div class="logo-img"><img src="../DC.png" alt="Logo 1" onerror="this.parentElement.innerHTML='<span class=ph>Logo 1</span>'"></div>
+        <div class="logo-img"><img src="../ABC.png" alt="Logo 2" onerror="this.parentElement.innerHTML='<span class=ph>Logo 2</span>'"></div>
+        <div class="logo-img"><img src="../CHO.png" alt="Logo 3" onerror="this.parentElement.innerHTML='<span class=ph>Logo 3</span>'"></div>
+      </div>
+      <div class="hd-brand">
+        <h1>ABC Queueing System</h1>
+        <p>Queue Display · Animal Bite Treatment Center · Davao City Health Office</p>
+      </div>
+    </div>
+    <div class="hd-right">
+      <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="nc-label">Now Calling</div>
+    <div class="nc-strip"><div class="nc-strip-fill" id="ncStrip" style="width:0;background:var(--border)"></div></div>
+    <div class="nc-number-wrap">
+      <div class="nc-number empty" id="ncNum">— — —</div>
+    </div>
+    <div class="nc-type" id="ncType"></div>
+    <div class="nc-step-box empty" id="ncStep">
+      Please watch this screen and listen for your queue number to be called.
+    </div>
+  </main>
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="s-card">
+      <div class="s-title">Patients Waiting</div>
+      <div class="cnt-grid">
+        <div class="cnt-cell">
+          <img class="cnt-icon" src="../priority.png" onerror="this.style.display='none'">
+          <div class="cnt-num c-red" id="cntP">0</div>
+          <div class="cnt-lbl c-red">Priority</div>
+        </div>
+        <div class="cnt-cell">
+          <img class="cnt-icon" src="../regular.png" onerror="this.style.display='none'">
+          <div class="cnt-num c-blue" id="cntR">0</div>
+          <div class="cnt-lbl c-blue">Regular</div>
+        </div>
+        <div class="cnt-cell">
+          <img class="cnt-icon" src="../followup.png" onerror="this.style.display='none'">
+          <div class="cnt-num c-purple" id="cntF">0</div>
+          <div class="cnt-lbl c-purple">Follow-up</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div class="s-title">Next in Line</div>
+      <div class="q-list" id="qList">
+        <div class="no-q">Queue is empty</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FOOTER -->
+  <footer class="ft">
+    <div class="ft-stat"><div class="ft-val" id="ftServed">0</div><div class="ft-lbl">Served Today</div></div>
+    <div class="ft-div"></div>
+    <div class="ticker-wrap">
+      <div class="ticker-inner">
+        Please wait for your number to be called on screen and announced by the speaker. &nbsp;·&nbsp; Priority patients (Senior Citizen, PWD, Pregnant) are attended to first. &nbsp;·&nbsp; Animal Bite Center · City Health Office Davao &nbsp;·&nbsp; Follow the step instruction shown on screen when your number is called. &nbsp;·&nbsp;
+      </div>
+    </div>
+    <div class="ft-div"></div>
+    <div class="ft-stat"><div class="ft-val" id="ftTime">--:--</div><div class="ft-lbl">Last Update</div></div>
+  </footer>
+
+</div>
+
+<script>
+const API='../api';
+let lastTicket=null;
+
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+},1000);
+
+const typeLabel={
+  priority:'Priority Patient — Senior Citizen / PWD / Pregnant',
+  regular:'Regular Patient — 1st Consultation',
+  followup:'Follow-up Patient — 2nd / 3rd Dose'
+};
+const typeColor={priority:'var(--red)',regular:'var(--blue)',followup:'var(--purple)'};
+
+function announce(ticket,stepLabel){
+  if(!('speechSynthesis' in window))return;
+  window.speechSynthesis.cancel();
+  const prefix=ticket.charAt(0);
+  const nums=ticket.slice(1).split('').join(' ');
+  const tw={P:'Priority',R:'Regular',F:'Follow-up'}[prefix]||'';
+  const u=new SpeechSynthesisUtterance(
+    `Attention please. Now calling ${tw} patient, number ${prefix} ${nums}. `+
+    `${tw} patient ${prefix} ${nums}, ${(stepLabel||'').replace('Proceed to','please go to').replace('Fill','please fill').replace('Wait for','wait for')}.`
+  );
+  u.lang='en-PH';u.rate=0.88;u.pitch=1;u.volume=1;
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(x=>x.lang.includes('en-PH'))||voices.find(x=>x.lang.startsWith('en'));
+  if(v)u.voice=v;
+  window.speechSynthesis.speak(u);
+}
+
+function playChime(){
+  return new Promise(res=>{
+    try{
+      const ctx=new(window.AudioContext||window.webkitAudioContext)();
+      const notes=[{f:523,d:.15},{f:659,d:.15},{f:784,d:.18},{f:1047,d:.28}];
+      let t=ctx.currentTime+.08,total=0;
+      notes.forEach(n=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=n.f;
+        g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+n.d+.1);
+        o.start(t);o.stop(t+n.d+.12);
+        total+=n.d+.06;t+=n.d+.06;
+      });
+      setTimeout(res,(total*1000)+300);
+    }catch(e){res();}
+  });
+}
+
+async function poll(){
+  try{
+    const r=await fetch(`${API}/display.php?t=${Date.now()}`);
+    const d=await r.json();
+    const nc=d.now_calling;
+    const numEl=document.getElementById('ncNum');
+    const stepEl=document.getElementById('ncStep');
+    const typeEl=document.getElementById('ncType');
+    const strip=document.getElementById('ncStrip');
+
+    if(nc&&nc.ticket_number){
+      const isNew=nc.ticket_number!==lastTicket;
+      numEl.className=`nc-number ${nc.patient_type}${isNew?' calling':''}`;
+      numEl.textContent=nc.ticket_number;
+      strip.style.width='100%';
+      strip.style.background=typeColor[nc.patient_type]||'var(--navy)';
+      typeEl.textContent=typeLabel[nc.patient_type]||'';
+      stepEl.className='nc-step-box';
+      stepEl.textContent=nc.step_label||'';
+      if(isNew){
+        lastTicket=nc.ticket_number;
+        setTimeout(()=>numEl.classList.remove('calling'),800);
+        playChime().then(()=>announce(nc.ticket_number,nc.step_label||''));
+      }
+    } else {
+      numEl.className='nc-number empty';
+      numEl.textContent='— — —';
+      strip.style.width='0';
+      typeEl.textContent='';
+      stepEl.className='nc-step-box empty';
+      stepEl.textContent='Please watch this screen and listen for your queue number to be called.';
+    }
+
+    document.getElementById('cntP').textContent=d.counts.priority;
+    document.getElementById('cntR').textContent=d.counts.regular;
+    document.getElementById('cntF').textContent=d.counts.followup;
+    document.getElementById('ftServed').textContent=d.served;
+    document.getElementById('ftTime').textContent=(d.time||'--:--').slice(0,5);
+
+    const iconMap={priority:'../priority.png',regular:'../regular.png',followup:'../followup.png'};
+    const q=(d.queue||[]).filter(p=>p.ticket_number!==(nc&&nc.ticket_number)).slice(0,6);
+    const listEl=document.getElementById('qList');
+    if(!q.length){
+      listEl.innerHTML='<div class="no-q">Queue is clear</div>';
+    } else {
+      listEl.innerHTML=q.map((p,i)=>`
+        <div class="q-row ${i===0?'is-next':''}">
+          <img style="width:24px;height:24px;object-fit:contain;opacity:${i===0?1:.4}" src="${iconMap[p.patient_type]}" onerror="this.style.display='none'">
+          <span class="q-ticket ${p.patient_type}">${p.ticket_number}</span>
+          <span class="q-info"><div class="q-type">${typeLabel[p.patient_type]||''}</div></span>
+          ${i===0?'<span class="q-badge badge-next">Up next</span>':'<span class="q-badge badge-wait">Waiting</span>'}
+        </div>`).join('');
+    }
+  }catch(e){}
+}
+
+if('speechSynthesis' in window){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();}
+poll();setInterval(poll,2500);
+</script>
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ABC Queueing System — Staff Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2a5e;
+  --navy-d:#111e4a;
+  --red:#e53e3e;       
+  --blue:#38a169;      
+  --green:#eab308;    
+  --amber:#d97706;
+  --purple:#eab308;
+  --orange:#dd6b20;
+  --bg:#f0f4f8;
+  --card:#ffffff;
+  --border:#e2e8f0;
+  --text:#1a202c;
+  --muted:#718096;
+  --muted2:#a0aec0;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--navy);
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 8px rgba(0,0,0,0.25);
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo-slot{
+  display:flex;align-items:center;gap:8px;
+}
+.logo-img{
+  width:40px;height:40px;border-radius:50%;object-fit:cover;
+  background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  flex-shrink:0;
+}
+.logo-img img{width:100%;height:100%;object-fit:cover;display:block}
+.logo-img.placeholder{font-size:10px;color:rgba(255,255,255,0.5);text-align:center;line-height:1.2;padding:4px}
+.brand h1{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;font-weight:400;letter-spacing:.01em}
+.brand p{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);
+  border-radius:99px;padding:5px 13px;font-size:12px;font-weight:600;
+  color:#fff;letter-spacing:.08em;
+}
+.live-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.clock{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;letter-spacing:.02em}
+
+/* ── STAT BAR ── */
+.statbar{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  background:#fff;border-bottom:1px solid var(--border);
+}
+.stat{
+  padding:14px 10px;text-align:center;border-right:1px solid var(--border);
+}
+.stat:last-child{border-right:none}
+.stat-v{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.stat-l{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.c-red{color:var(--red)}.c-blue{color:var(--blue)}.c-green{color:var(--green)}
+.c-amber{color:var(--amber)}.c-navy{color:var(--navy)}.c-dark{color:var(--text)}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 340px;min-height:calc(100vh - 108px)}
+
+/* ── LEFT PANEL ── */
+.left{padding:20px 22px;overflow-y:auto;max-height:calc(100vh - 108px);background:var(--bg)}
+
+/* Register card */
+.reg-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:18px 20px;margin-bottom:20px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.reg-title{
+  font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.reg-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.reg-grid{display:grid;grid-template-columns:180px 1fr auto;gap:10px;align-items:end}
+.field label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.field select,.field input{
+  width:100%;background:#fff;border:1.5px solid var(--border);border-radius:8px;
+  padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;
+  outline:none;transition:border-color .2s;
+}
+.field select:focus,.field input:focus{border-color:var(--navy)}
+.btn-reg{
+  background:var(--navy);border:none;border-radius:8px;
+  padding:10px 20px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:all .2s;display:flex;align-items:center;gap:6px;
+  box-shadow:0 2px 8px rgba(26,42,94,.3);
+}
+.btn-reg:hover{background:var(--navy-d);transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,42,94,.4)}
+.btn-reg:active{transform:translateY(0)}
+
+/* Queue list header */
+.ql-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+}
+.ql-title{font-size:18px;font-weight:700;color:var(--text)}
+.ql-actions{display:flex;gap:10px;align-items:center}
+.inside-badge{
+  background:#fff;border:1.5px solid var(--border);border-radius:99px;
+  padding:5px 14px;font-size:12px;font-weight:600;color:var(--muted);
+}
+.inside-badge.full{border-color:var(--red);color:var(--red)}
+.btn-reset{
+  background:#fff;border:1.5px solid #fed7d7;border-radius:8px;
+  padding:8px 16px;color:var(--red);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.btn-reset:hover{background:#fff5f5;border-color:var(--red)}
+.btn-call-next{
+  background:var(--navy);border:none;border-radius:8px;
+  padding:9px 20px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;
+  box-shadow:0 2px 8px rgba(26,42,94,.3);
+}
+.btn-call-next:hover{background:var(--navy-d);transform:translateY(-1px)}
+.btn-call-next:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.play-icon{width:0;height:0;border-style:solid;border-width:5px 0 5px 9px;border-color:transparent transparent transparent #fff;display:inline-block}
+
+/* Section */
+.section{margin-bottom:20px}
+.sec-hdr{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 0;margin-bottom:8px;
+  border-bottom:2px solid var(--border);
+}
+.sec-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sec-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.sec-count{margin-left:auto;font-size:11px;font-weight:600;color:var(--muted2)}
+
+/* Patient row */
+.p-row{
+  background:var(--card);border:1.5px solid var(--border);border-radius:10px;
+  padding:12px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px;
+  transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.05);
+  animation:rowIn .25s ease;
+}
+@keyframes rowIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.p-row.in-progress{border-color:#bee3f8;background:#ebf8ff}
+.p-row.timer-warn{border-color:#fbd38d;background:#fffbeb}
+.p-row.timer-exp{border-color:#feb2b2;background:#fff5f5;animation:rowIn .25s ease,expPulse 1.5s infinite}
+@keyframes expPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,62,62,0)}50%{box-shadow:0 0 0 4px rgba(229,62,62,.15)}}
+
+.p-icon{width:36px;height:36px;border-radius:8px;object-fit:contain;flex-shrink:0}
+.p-ticket{font-family:'DM Serif Display',serif;font-size:26px;min-width:66px;font-variant-numeric:tabular-nums;font-weight:400}
+.p-ticket.priority{color:var(--red)}.p-ticket.regular{color:var(--blue)}.p-ticket.followup{color:var(--purple)}
+.p-info{flex:1;min-width:0}
+.p-step{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.timer-bar{height:4px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px}
+.timer-fill{height:100%;border-radius:99px;transition:width 1s linear,background .5s}
+.p-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.abtn{
+  font-size:11px;padding:6px 11px;border-radius:7px;border:1.5px solid;
+  cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;transition:all .15s;white-space:nowrap;
+}
+.abtn-call{border-color:var(--navy);color:var(--navy);background:#fff}
+.abtn-call:hover{background:var(--navy);color:#fff}
+.abtn-next{border-color:var(--blue);color:var(--blue);background:#fff}
+.abtn-next:hover{background:var(--blue);color:#fff}
+.abtn-done{border-color:#c6f6d5;color:var(--green);background:#fff}
+.abtn-done:hover{background:var(--green);color:#fff}
+.abtn-skip{border-color:var(--border);color:var(--muted);background:#fff}
+.abtn-skip:hover{border-color:var(--red);color:var(--red)}
+.abtn-sev{border-color:#fed7d7;color:var(--red);background:#fff;font-size:10px}
+.abtn-sev:hover,.abtn-sev.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+.empty-state{
+  text-align:center;padding:32px 20px;
+  background:var(--card);border:1.5px dashed var(--border);border-radius:10px;
+  color:var(--muted2);
+}
+.empty-state img{width:40px;height:40px;object-fit:contain;opacity:.3;margin-bottom:8px}
+.empty-state p{font-size:13px}
+
+/* ── RIGHT PANEL ── */
+.right{
+  background:#fff;border-left:1px solid var(--border);
+  padding:20px 18px;display:flex;flex-direction:column;gap:16px;
+  overflow-y:auto;max-height:calc(100vh - 108px);
+}
+.r-card{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:16px 18px}
+.r-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px}
+
+/* Now serving */
+.ns-wrap{text-align:center;padding:8px 0}
+.ns-num{font-family:'DM Serif Display',serif;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.ns-num.priority{color:var(--red)}.ns-num.regular{color:var(--blue)}.ns-num.followup{color:var(--purple)}.ns-num.empty{color:var(--muted2);font-size:28px}
+.ns-step{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+
+/* Triage ref */
+.triage-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.triage-cell{border-radius:8px;padding:10px 8px;text-align:center;border:1.5px solid}
+.triage-cell.cat1{border-color:#c6f6d5;background:#f0fff4}.t1-lbl{color:var(--green);font-size:13px;font-weight:700}
+.triage-cell.cat2{border-color:#fbd38d;background:#fffbeb}.t2-lbl{color:var(--amber);font-size:13px;font-weight:700}
+.triage-cell.cat3{border-color:#fed7d7;background:#fff5f5}.t3-lbl{color:var(--red);font-size:13px;font-weight:700}
+.triage-desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.35}
+
+/* Log */
+.log-row{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.log-row:last-child{border-bottom:none}
+.log-act{font-weight:700;min-width:66px;font-size:11px}
+.la-registered{color:var(--blue)}.la-called{color:var(--green)}.la-done{color:var(--muted)}
+.la-skipped{color:var(--red)}.la-step_advanced{color:var(--amber)}
+.log-tk{font-family:'DM Serif Display',serif;font-size:15px}
+.log-time{margin-left:auto;color:var(--muted2);font-size:10px;white-space:nowrap}
+
+/* Toast */
+.toast{
+  position:fixed;top:70px;right:20px;padding:11px 18px;border-radius:10px;
+  font-size:13px;font-weight:600;z-index:999;
+  transform:translateX(220px);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+.toast.show{transform:translateX(0);opacity:1}
+.toast.ok{background:#f0fff4;border:1.5px solid #9ae6b4;color:#276749}
+.toast.err{background:#fff5f5;border:1.5px solid #feb2b2;color:#9b2c2c}
+.toast.warn{background:#fffbeb;border:1.5px solid #fbd38d;color:#7b341e}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-slot">
+      <!-- Logo 1 -->
+      <div class="logo-img" id="logo1">
+        <img src="../DC.png" alt="Logo 1" onerror="this.parentElement.innerHTML='<span class=\'placeholder\'>Logo<br>1</span>'">
+      </div>
+      <!-- Logo 2 -->
+      <div class="logo-img" id="logo2">
+        <img src="../ABC.png" alt="Logo 2" onerror="this.parentElement.innerHTML='<span class=\'placeholder\'>Logo<br>2</span>'">
+      </div>
+      <!-- Logo 3 -->
+      <div class="logo-img" id="logo3">
+        <img src="../CHO.png" alt="Logo 3" onerror="this.parentElement.innerHTML='<span class=\'placeholder\'>Logo<br>3</span>'">
+      </div>
+    </div>
+    <div class="brand">
+      <h1>ABC Queueing System</h1>
+      <p>Staff Monitor · Animal Bite Treatment Center · Davao City Health Office</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- STAT BAR -->
+<div class="statbar">
+  <div class="stat"><div class="stat-v c-red" id="stP">0</div><div class="stat-l">Priority Waiting</div></div>
+  <div class="stat"><div class="stat-v c-blue" id="stR">0</div><div class="stat-l">Regular Waiting</div></div>
+  <div class="stat"><div class="stat-v c-green" id="stF">0</div><div class="stat-l">Follow-up Waiting</div></div>
+  <div class="stat"><div class="stat-v c-amber" id="stInside">0</div><div class="stat-l">Inside (Max 5)</div></div>
+  <div class="stat"><div class="stat-v c-dark" id="stServed">0</div><div class="stat-l">Served Today</div></div>
+  <div class="stat"><div class="stat-v c-dark" id="stTotal">0</div><div class="stat-l">Total Today</div></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <!-- Register -->
+    <div class="reg-card">
+      <div class="reg-title">Register New Patient</div>
+      <div class="reg-grid">
+        <div class="field">
+          <label>Patient Type</label>
+          <select id="regType">
+            <option value="priority">⭐ Priority (Senior/PWD/Pregnant)</option>
+            <option value="regular" selected>🩹 Regular (1st Consultation)</option>
+            <option value="followup">💉 Follow-up (2nd/3rd Dose)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Patient Name <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional)</span></label>
+          <input type="text" id="regName" placeholder="e.g. Juan Dela Cruz" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn-reg" onclick="registerPatient()">
+            <span style="font-size:16px;line-height:1">+</span> Register
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Queue list header -->
+    <div class="ql-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="ql-title">Queue List</span>
+        <span class="inside-badge" id="insideBadge">Inside: 0 / 5</span>
+      </div>
+      <div class="ql-actions">
+        <button class="btn-reset" onclick="confirmReset()">Reset Day</button>
+        <button class="btn-call-next" id="callNextBtn" onclick="callNext()" disabled>
+          <span class="play-icon"></span> Call Next
+        </button>
+      </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-dot" style="background:var(--red)"></span>
+        <span class="sec-name">Priority — Senior / PWD / Pregnant</span>
+        <span class="sec-count" id="cntPLbl">0 waiting</span>
+      </div>
+      <div id="listP">
+        <div class="empty-state">
+          <img src="../priority.png" onerror="this.style.display='none'"><p>No priority patients</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regular -->
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-dot" style="background:var(--blue)"></span>
+        <span class="sec-name">Regular — 1st Consultation</span>
+        <span class="sec-count" id="cntRLbl">0 waiting</span>
+      </div>
+      <div id="listR">
+        <div class="empty-state">
+          <img src="../regular.png" onerror="this.style.display='none'"><p>No regular patients</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Follow-up -->
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-dot" style="background:var(--purple)"></span>
+        <span class="sec-name">Follow-up — 2nd / 3rd Dose</span>
+        <span class="sec-count" id="cntFLbl">0 waiting</span>
+      </div>
+      <div id="listF">
+        <div class="empty-state">
+          <img src="../followup.png" onerror="this.style.display='none'"><p>No follow-up patients</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <!-- Now Serving -->
+    <div class="r-card">
+      <div class="r-title">Now Serving</div>
+      <div class="ns-wrap">
+        <div class="ns-num empty" id="nsNum">—</div>
+        <div class="ns-step" id="nsStep">Waiting for next patient</div>
+      </div>
+    </div>
+
+    <!-- Triage Reference -->
+    <div class="r-card">
+      <div class="r-title">Quick Triage Reference</div>
+      <div class="triage-grid">
+        <div class="triage-cell cat1"><div class="t1-lbl">Cat I</div><div class="triage-desc">Minor wound<br>No immediate risk</div></div>
+        <div class="triage-cell cat2"><div class="t2-lbl">Cat II</div><div class="triage-desc">Moderate wound<br>Needs attention</div></div>
+        <div class="triage-cell cat3"><div class="t3-lbl">Cat III</div><div class="triage-desc">Severe wound<br>Bumped to front</div></div>
+      </div>
+    </div>
+
+    <!-- Step Guide -->
+    <div class="r-card">
+      <div class="r-title">Process Steps</div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Triage</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Nurse assesses severity</span></div>
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">ITR + Vitals</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Fill form + BP/temp</span></div>
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:#63b3ed;flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Yellow Chair</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Wait for doctor</span></div>
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:#90cdf4;flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Blue Chair</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Severe — skin testing</span></div>
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Doctor</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Consultation + card</span></div>
+        <div class="log-row" style="border-bottom:1px solid var(--border);padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Encoder</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">ITR encoded</span></div>
+        <div class="log-row" style="padding:7px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block;margin-right:8px"></span><span style="font-size:12px;font-weight:600;color:var(--text)">Vaccination</span><span style="margin-left:auto;font-size:11px;color:var(--muted)">Dose + observe</span></div>
+      </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="r-card" style="flex:1">
+      <div class="r-title">Activity Log</div>
+      <div id="actLog"><div style="color:var(--muted2);font-size:12px;text-align:center;padding:16px">No activity yet</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API='../api';
+let logItems=[];
+let timerExp=new Set(), timerWarn=new Set();
+
+// Clock
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+},1000);
+
+async function registerPatient(){
+  const type=document.getElementById('regType').value;
+  const name=document.getElementById('regName').value.trim();
+  const r=await fetch(`${API}/register.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,name})});
+  const d=await r.json();
+  if(!d.success){toast(d.error,'err');return;}
+  document.getElementById('regName').value='';
+  toast(`Registered: ${d.ticket_number}${name?' — '+name:''}`, 'ok');
+  addLog('registered',d.ticket_number);
+  fetchQueue();
+}
+
+async function callNext(){
+  const r=await post({action:'call_next'});
+  if(r.error){toast(r.error,'err');return;}
+  toast(`Calling ${r.called}`,'ok');
+  playChime(); addLog('called',r.called); fetchQueue();
+}
+
+async function callPatient(ticket){
+  const r=await post({action:'call',ticket_number:ticket});
+  if(r.success){toast(`Calling ${ticket}`,'ok');playChime();addLog('called',ticket);fetchQueue();}
+  else toast(r.error,'err');
+}
+async function advancePatient(ticket){
+  const r=await post({action:'advance',ticket_number:ticket});
+  if(r.success){toast(`${ticket} → next step`,'ok');playChime();addLog('step_advanced',ticket);fetchQueue();}
+}
+async function markDone(ticket){
+  await post({action:'done',ticket_number:ticket});
+  toast(`${ticket} done`,'ok');addLog('done',ticket);fetchQueue();
+}
+async function skipPatient(ticket){
+  if(!confirm(`Skip ${ticket}?`))return;
+  await post({action:'skip',ticket_number:ticket});
+  toast(`${ticket} skipped`,'err');addLog('skipped',ticket);fetchQueue();
+}
+async function toggleSevere(ticket,was){
+  await post({action:'set_note',ticket_number:ticket,note:was?'':'severe'});
+  toast(was?`${ticket} severity cleared`:`${ticket} marked severe`,'warn');
+  fetchQueue();
+}
+async function confirmReset(){
+  if(!confirm('Reset queue for new day?'))return;
+  await post({action:'reset_daily'});
+  toast('Queue reset','ok');logItems=[];timerExp.clear();timerWarn.clear();renderLog();fetchQueue();
+}
+async function post(body){
+  const r=await fetch(`${API}/queue.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+
+async function fetchQueue(){
+  try{const r=await fetch(`${API}/queue.php`);const d=await r.json();render(d);}catch(e){}
+}
+
+function render(d){
+  document.getElementById('stP').textContent=d.counts.priority;
+  document.getElementById('stR').textContent=d.counts.regular;
+  document.getElementById('stF').textContent=d.counts.followup;
+  document.getElementById('stInside').textContent=d.inside_count||0;
+  document.getElementById('stServed').textContent=d.served;
+  document.getElementById('stTotal').textContent=d.total;
+  document.getElementById('cntPLbl').textContent=d.counts.priority+' waiting';
+  document.getElementById('cntRLbl').textContent=d.counts.regular+' waiting';
+  document.getElementById('cntFLbl').textContent=d.counts.followup+' waiting';
+
+  const inside=d.inside_count||0;
+  const pill=document.getElementById('insideBadge');
+  pill.textContent=`Inside: ${inside} / 5`;
+  pill.className='inside-badge'+(inside>=5?' full':'');
+
+  const total=(d.counts.priority||0)+(d.counts.regular||0)+(d.counts.followup||0);
+  document.getElementById('callNextBtn').disabled=(inside>=5||total===0);
+
+  const nc=d.now_calling;
+  if(nc&&nc.ticket_number){
+    const el=document.getElementById('nsNum');
+    el.textContent=nc.ticket_number; el.className=`ns-num ${nc.patient_type}`;
+    document.getElementById('nsStep').textContent=nc.step_label||'';
+  }
+
+  const p=d.queue||[];
+  renderList('listP',p.filter(x=>x.patient_type==='priority'),'../priority.png','No priority patients');
+  renderList('listR',p.filter(x=>x.patient_type==='regular'),'../regular.png','No regular patients');
+  renderList('listF',p.filter(x=>x.patient_type==='followup'),'../followup.png','No follow-up patients');
+
+  p.forEach(pt=>{
+    if(pt.timer_expired&&!timerExp.has(pt.ticket_number)){
+      timerExp.add(pt.ticket_number);
+      toast(`⏰ ${pt.ticket_number} — 20 min limit reached!`,'err');
+      playBeep('expire');
+    } else if(pt.timer_warning&&!timerWarn.has(pt.ticket_number)){
+      timerWarn.add(pt.ticket_number);
+      toast(`⚠ ${pt.ticket_number} — 2 minutes remaining`,'warn');
+    }
+  });
+}
+
+function renderList(elId,patients,icon,emptyMsg){
+  const el=document.getElementById(elId);
+  if(!patients.length){
+    el.innerHTML=`<div class="empty-state"><img src="${icon}" onerror="this.style.display='none'"><p>${emptyMsg}</p></div>`;
+    return;
+  }
+  el.innerHTML=patients.map(p=>{
+    const exp=p.timer_expired, warn=p.timer_warning;
+    const cls=exp?'timer-exp':warn?'timer-warn':p.status==='in_progress'?'in-progress':'';
+    const fillColor=exp?'#e53e3e':warn?'#d97706':p.status==='in_progress'?'#3182ce':'#cbd5e0';
+    const rem=p.timer_remaining?formatTime(p.timer_remaining):'';
+    const severe=(p.notes||'').includes('severe');
+    const pct=p.timer_pct||0;
+    return `<div class="p-row ${cls}">
+      <img class="p-icon" src="${icon}" onerror="this.style.display='none'">
+      <div class="p-ticket ${p.patient_type}">${p.ticket_number}</div>
+      <div class="p-info">
+        <div class="p-step">${p.step_label||'Waiting to be called'}</div>
+        <div class="p-meta">${p.patient_name?p.patient_name+' · ':''}${p.status==='in_progress'&&rem?rem+' remaining':'Registered '+timeAgo(p.created_at)}</div>
+        ${p.status==='in_progress'?`<div class="timer-bar"><div class="timer-fill" style="width:${pct}%;background:${fillColor}"></div></div>`:''}
+      </div>
+      <div class="p-actions">
+        ${p.current_step==='waiting'?`<button class="abtn abtn-call" onclick="callPatient('${p.ticket_number}')">▶ Call</button>`:''}
+        ${p.status==='in_progress'?`<button class="abtn abtn-next" onclick="advancePatient('${p.ticket_number}')">Next →</button>`:''}
+        ${p.status==='in_progress'&&['triage','itr_vitals'].includes(p.current_step)?`<button class="abtn abtn-sev ${severe?'active':''}" onclick="toggleSevere('${p.ticket_number}',${severe})">🚨 Severe</button>`:''}
+        <button class="abtn abtn-done" onclick="markDone('${p.ticket_number}')">✓ Done</button>
+        <button class="abtn abtn-skip" onclick="skipPatient('${p.ticket_number}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatTime(s){const m=Math.floor(s/60);return `${m}:${String(s%60).padStart(2,'0')}`}
+function timeAgo(ts){
+  if(!ts)return '';
+  const d=Math.floor((Date.now()-new Date(ts))/60000);
+  return d<1?'just now':`${d}m ago`;
+}
+
+function addLog(action,ticket){
+  const t=new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logItems.unshift({action,ticket,t});if(logItems.length>40)logItems.pop();
+  renderLog();
+}
+function renderLog(){
+  const el=document.getElementById('actLog');
+  if(!logItems.length){el.innerHTML='<div style="color:var(--muted2);font-size:12px;text-align:center;padding:16px">No activity yet</div>';return;}
+  el.innerHTML=logItems.map(l=>`<div class="log-row">
+    <span class="log-act la-${l.action}">${l.action}</span>
+    <span class="log-tk">${l.ticket}</span>
+    <span class="log-time">${l.t}</span>
+  </div>`).join('');
+}
+
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`toast ${type} show`;
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+function playChime(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [{f:523,d:.15},{f:659,d:.15},{f:784,d:.18},{f:1047,d:.25}].reduce((t,n)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=n.f;
+      g.gain.setValueAtTime(0.25,t);g.gain.exponentialRampToValueAtTime(.001,t+n.d+.08);
+      o.start(t);o.stop(t+n.d+.1);return t+n.d+.06;
+    },ctx.currentTime+.05);
+  }catch(e){}
+}
+function playBeep(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const p=type==='expire'?[{f:440,d:.2},{f:330,d:.2},{f:440,d:.2}]:[{f:880,d:.1},{f:1100,d:.15}];
+    p.reduce((t,n)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=n.f;
+      g.gain.setValueAtTime(0.2,t);g.gain.exponentialRampToValueAtTime(.001,t+n.d);
+      o.start(t);o.stop(t+n.d+.02);return t+n.d+.04;
+    },ctx.currentTime+.05);
+  }catch(e){}
+}
+
+fetchQueue();
+setInterval(fetchQueue,4000);
+</script>
+</body>
+</html>
