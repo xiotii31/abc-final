@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ABC Queueing System — Welcome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1a2a5e;
+  --navy-d:#111e4a;
+  --navy-l:#243570;
+  --gold:#c9a227;
+  --gold-l:#e8c84a;
+  --gold-g:rgba(201,162,39,0.35);
+  --white:#ffffff;
+}
+
+html,body{
+  width:100vw;height:100vh;overflow:hidden;
+  font-family:'Inter',sans-serif;
+  background:var(--navy);
+  color:var(--white);
+}
+
+/* ── Animated background ── */
+.bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bg-radial{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%, #243570 0%, #1a2a5e 45%, #0d1633 100%);
+}
+.bg-shine{
+  position:absolute;
+  width:600px;height:600px;
+  background:radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%);
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  animation:shineFloat 6s ease-in-out infinite;
+}
+@keyframes shineFloat{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-52%) scale(1.08)}
+}
+.bg-lines{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size:60px 60px;
+}
+/* Corner glows */
+.glow-tl{position:absolute;top:-150px;left:-150px;width:400px;height:400px;background:radial-gradient(circle,rgba(201,162,39,0.12),transparent 70%);border-radius:50%}
+.glow-br{position:absolute;bottom:-150px;right:-150px;width:400px;height:400px;background:radial-gradient(circle,rgba(59,130,246,0.1),transparent 70%);border-radius:50%}
+
+/* ── MAIN CONTENT ── */
+.content{
+  position:relative;z-index:1;
+  width:100%;height:100%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;
+  gap:0;
+}
+
+/* ── Top label ── */
+.top-label{
+  font-size:11px;font-weight:600;letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin-bottom:48px;
+  opacity:0;animation:fadeUp .8s ease .2s forwards;
+}
+
+/* ── Logo row ── */
+.logos{
+  display:flex;align-items:center;justify-content:center;
+  gap:40px;margin-bottom:52px;
+  opacity:0;animation:fadeUp .9s ease .5s forwards;
+}
+.logo-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.logo-circle{
+  width:120px;height:120px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.05);
+  transition:transform .3s ease, box-shadow .3s ease;
+  position:relative;
+}
+.logo-circle::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,transparent 60%);
+  pointer-events:none;
+}
+.logo-circle:hover{
+  transform:translateY(-6px) scale(1.04);
+  box-shadow:0 16px 48px rgba(0,0,0,.4), 0 0 0 1px rgba(201,162,39,.3), 0 0 40px rgba(201,162,39,.15);
+}
+.logo-circle img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.logo-circle .ph{
+  font-size:11px;color:rgba(255,255,255,.4);
+  text-align:center;line-height:1.4;padding:10px;
+  font-weight:500;
+}
+.logo-sep{
+  width:1px;height:64px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,.2),transparent);
+}
+
+/* Middle logo is slightly bigger */
+.logo-wrap.center .logo-circle{
+  width:140px;height:140px;
+  border-color:rgba(201,162,39,.5);
+  box-shadow:0 8px 40px rgba(0,0,0,.4), 0 0 0 1px rgba(201,162,39,.2), 0 0 60px rgba(201,162,39,.1);
+}
+
+/* ── Gold divider ── */
+.divider{
+  display:flex;align-items:center;gap:14px;margin-bottom:28px;
+  opacity:0;animation:fadeUp .8s ease .9s forwards;
+  width:360px;
+}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,162,39,.5),transparent)}
+.divider-diamond{
+  width:8px;height:8px;background:var(--gold);
+  transform:rotate(45deg);flex-shrink:0;
+  box-shadow:0 0 12px var(--gold-g);
+}
+
+/* ── Main greeting ── */
+.greeting{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(52px,8vw,80px);
+  font-weight:400;
+  color:var(--white);
+  text-align:center;
+  line-height:1;
+  letter-spacing:-.01em;
+  margin-bottom:6px;
+  opacity:0;animation:fadeUp 1s ease 1.1s forwards;
+}
+.greeting span{
+  background:linear-gradient(135deg, var(--gold-l), var(--gold), #a07820);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  display:inline-block;
+  filter:drop-shadow(0 0 24px rgba(201,162,39,.4));
+}
+
+/* ── Subtitle ── */
+.subtitle{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(18px,3vw,26px);
+  color:rgba(255,255,255,.5);
+  text-align:center;font-style:italic;
+  margin-bottom:52px;
+  opacity:0;animation:fadeUp .8s ease 1.3s forwards;
+  letter-spacing:.02em;
+}
+
+/* ── Entry buttons ── */
+.btn-row{
+  display:flex;gap:16px;
+  opacity:0;animation:fadeUp .8s ease 1.6s forwards;
+}
+.btn-entry{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 32px;border-radius:12px;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;text-decoration:none;
+  transition:all .25s ease;
+  letter-spacing:.02em;
+}
+.btn-staff{
+  background:var(--gold);color:var(--navy-d);border:none;
+  box-shadow:0 4px 20px rgba(201,162,39,.35);
+}
+.btn-staff:hover{
+  background:var(--gold-l);transform:translateY(-3px);
+  box-shadow:0 8px 32px rgba(201,162,39,.5);
+}
+.btn-tv{
+  background:rgba(255,255,255,.08);color:#fff;
+  border:1.5px solid rgba(255,255,255,.2);
+}
+.btn-tv:hover{
+  background:rgba(255,255,255,.14);transform:translateY(-3px);
+  border-color:rgba(255,255,255,.4);
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.btn-icon{font-size:18px;line-height:1}
+
+/* ── Bottom credit ── */
+.credit{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.08em;text-align:center;
+  opacity:0;animation:fadeUp .8s ease 2s forwards;
+  white-space:nowrap;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Particle dots ── */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{
+  position:absolute;width:2px;height:2px;background:rgba(255,255,255,.35);
+  border-radius:50%;animation:particleDrift linear infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg">
+  <div class="bg-radial"></div>
+  <div class="bg-lines"></div>
+  <div class="bg-shine"></div>
+  <div class="glow-tl"></div>
+  <div class="glow-br"></div>
+</div>
+
+<!-- Floating particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Main content -->
+<div class="content">
+
+  <div class="top-label">Lungsod ng Dabaw · Animal Bite Treatment Center · City Health Office</div>
+
+  <!-- 3 Logos -->
+  <div class="logos">
+    <div class="logo-wrap">
+      <div class="logo-circle">
+        <img src="../DC.png" alt="Logo 1"
+          onerror="this.parentElement.innerHTML='<div class=ph>Davao City<br>Seal</div>'">
+      </div>
+    </div>
+
+    <div class="logo-sep"></div>
+
+    <div class="logo-wrap center">
+      <div class="logo-circle">
+        <img src="../ABC.png" alt="Logo 2"
+          onerror="this.parentElement.innerHTML='<div class=ph>Animal Bite<br>Center</div>'">
+      </div>
+    </div>
+
+    <div class="logo-sep"></div>
+
+    <div class="logo-wrap">
+      <div class="logo-circle">
+        <img src="../CHO.png" alt="Logo 3"
+          onerror="this.parentElement.innerHTML='<div class=ph>City Health<br>Office</div>'">
+      </div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-diamond"></div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- Greeting -->
+  <div class="greeting">Madayaw <span>Dabaw!</span></div>
+  <div class="subtitle">Welcome to the Animal Bite Treatment Center</div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <a href="staff.html" class="btn-entry btn-staff">
+      <span class="btn-icon"></span> Staff Monitor
+    </a>
+    <a href="tv.html" class="btn-entry btn-tv">
+      <span class="btn-icon"></span> TV Display
+    </a>
+  </div>
+
+</div>
+
+<!-- Footer credit -->
+<div class="credit">ABC Queueing System · Davao City Health Office </div>
+
+<script>
+// Generate floating particles
+const container = document.getElementById('particles');
+for (let i = 0; i < 28; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size   = Math.random() * 2.5 + 1;
+  const x      = Math.random() * 100;
+  const delay  = Math.random() * 12;
+  const dur    = Math.random() * 14 + 10;
+  const opacity= Math.random() * 0.3 + 0.05;
+  p.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${x}%;bottom:-10px;
+    opacity:${opacity};
+    animation-duration:${dur}s;
+    animation-delay:-${delay}s;
+    animation-name:particleDrift;
+  `;
+  container.appendChild(p);
+}
+
+// Inject particle keyframes
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes particleDrift {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(${Math.random()>0.5?'':'- '}${Math.floor(Math.random()*60+20)}px); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
